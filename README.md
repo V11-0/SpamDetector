@@ -1,7 +1,7 @@
 # SpamDetector
 Simple project used to detect if a given email is a SPAM or not, made for AI subject of Systems Development and Analysis course.
 
-The predcttion model was trained with this dataset:
+The predction model was trained with this dataset:
 https://archive.ics.uci.edu/ml/datasets/spambase
 
 Projeto simples para detectar se um Email é SPAM ou não, feito para a disciplina de IA do curso de ADS.
