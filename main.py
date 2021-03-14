@@ -1,5 +1,5 @@
 import joblib
-from flask import Flask, jsonify, Response
+from flask import Flask, jsonify, Response, request
 
 app = Flask(__name__)
 
@@ -8,7 +8,12 @@ def checkEmail():
 
     model = joblib.load("model/model.pkl")
 
-    return Response(status=501)
+    message = request.form['message']
+        
+    if len(message) == 0:
+        return Response(status=400)
+
+    return message
     
 def main():
     
