@@ -3,15 +3,20 @@ from flask import Flask, jsonify, Response, request
 
 app = Flask(__name__)
 
+words_frequency = []
+char_frequency = []
+
 @app.route("/checkEmail", methods=['POST'])
 def checkEmail():
 
     model = joblib.load("model/model.pkl")
 
-    message = request.form['message']
+    message = request.json['message']
         
     if len(message) == 0:
         return Response(status=400)
+
+    # Count Words
 
     return message
     
