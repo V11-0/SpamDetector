@@ -1,9 +1,12 @@
-import numpy as np
+import pandas as pd
 import joblib
 import re
 from flask import Flask, jsonify, Response, request
+from flask_cors import CORS, cross_origin
 
 app = Flask(__name__)
+cors = CORS(app)
+app.config['CORS_HEADERS'] = 'Content-Type'
 
 words_frequency = []
 char_frequency = []
@@ -14,6 +17,7 @@ message = ''
 
 # Things: We assume message does not have line breaks 
 @app.route("/checkEmail", methods=['POST'])
+@cross_origin()
 def checkEmail():
 
     model = joblib.load("model/model.pkl")
@@ -21,7 +25,7 @@ def checkEmail():
     global message
     message = request.json['message']
         
-    if len(message) == 0:
+    if len(message) < 5:
         return Response(status=400)
 
     # Count capitals related things
@@ -41,12 +45,24 @@ def checkEmail():
     countDatasetChars()
 
     # Until here we have the absolute frquency of words and chars, we need to get this data in percentages
-    final_data = toModelDataFormat()
+    data = toModelDataFormat()
     
     # Add columns names as np array, as in the last section of model.ipynb
-
-    return model.predict(final_data)
+    # Get columns names by reading the dataset
+    df = pd.read_csv("./data/dataset_44_spambase.csv")
+    df = df.drop(['class'], axis = 1)
     
+    final_data = mergeLabels(df.columns, data)
+    frame = model.predict(final_data)
+
+    print(final_data)
+
+    if (frame.max() == 1):
+        e = True
+    else:
+        e = False
+
+    return {'class': e}
 
 def countDatasetWords(message_words):
 
@@ -54,7 +70,7 @@ def countDatasetWords(message_words):
 
     for mword in message_words:
         for index, word in enumerate(words_frequency):
-            if (word == mword):
+            if (word[0] == mword):
                 words_frequency[index][1] += 1
 
 def countDatasetChars():
@@ -63,7 +79,7 @@ def countDatasetChars():
     
     for mchar in message:
         for index, char in enumerate(char_frequency):
-            if (mchar == char):
+            if (mchar[0] == char):
                 char_frequency[index][1] += 1
 
 def countCapitalLettersSequences():
@@ -72,8 +88,8 @@ def countCapitalLettersSequences():
 
     for index, char in enumerate(message):
         if (char.isupper()):
-            if (message[index - 1].isupper()):
-                capital_sequences[-1] + char
+            if (message[index - 1].isupper() and index > 0):
+                capital_sequences[-1] = capital_sequences[-1] + char
             else:
                 capital_sequences.append(char)
 
@@ -84,9 +100,13 @@ def countCapitalLettersSequences():
     len_sum = 0
 
     for sequence in capital_sequences:
-        len_sum = len(sequence)
+        len_sum += len(sequence)
 
-    len_avg = len_sum / len(capital_sequences)
+    try:
+        len_avg = len_sum / len(capital_sequences)
+    except ZeroDivisionError:
+        len_avg = 0
+
     capital_data.append(len_avg)
 
     # Length of longest uninterrupted sequence of capital letters
@@ -98,7 +118,7 @@ def countCapitalLettersSequences():
 
     capital_data.append(len_longest)
 
-    # total number of capital letters in the e-mail, we already have that
+    # total number of capital letters in the e-mail
     capital_data.append(len_sum)
 
 def toModelDataFormat():
@@ -117,6 +137,18 @@ def toModelDataFormat():
         email.append(data)
 
     return email
+
+def mergeLabels(columns, data):
+
+    d = {}
+
+    for key in columns:
+        for value in data:
+            d[key] = [value]
+            data.remove(value)
+            break
+
+    return pd.DataFrame.from_dict(d)
     
 def main():
 
