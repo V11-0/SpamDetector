@@ -20,6 +20,7 @@ message = ''
 @cross_origin()
 def checkEmail():
 
+    main()
     model = joblib.load("model/model.pkl")
 
     global message
@@ -61,6 +62,8 @@ def checkEmail():
         e = True
     else:
         e = False
+
+    main()
 
     return {'class': e}
 
@@ -152,7 +155,12 @@ def mergeLabels(columns, data):
     
 def main():
 
-    global words_frequency, char_frequency
+    global words_frequency, char_frequency, capital_data, number_words, number_chars, message
+
+    capital_data = []
+    number_words = 0
+    number_chars = 0
+    message = ''
     
     # Define in an array the words used by the database
     words_frequency = [
@@ -174,7 +182,5 @@ def main():
     for char_data in char_frequency:
         char_data.append(0)
 
-    
-    app.run()
-
 main()
+app.run()
